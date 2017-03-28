@@ -1,0 +1,36 @@
+<idea-plugin version="2">
+  <id>com.google.yufang.myfirstplugin</id>
+  <name>Fang Yu First Plugin</name>
+  <version>1.0</version>
+  <vendor email="yufang@google.com" url="http://www.google.com">Google, Inc.</vendor>
+
+  <description><![CDATA[
+       Fang Yu first plugin
+    ]]></description>
+
+  <change-notes><![CDATA[
+      First version
+    ]]>
+  </change-notes>
+
+  <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
+  <idea-version since-build="145.0"/>
+
+  <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+       on how to target different products -->
+  <!-- uncomment to enable plugin in all products
+  <depends>com.intellij.modules.lang</depends>
+  -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- Add your extensions here -->
+  </extensions>
+
+  <actions>
+    <group id="MyPlugin.SampleMenu" text="_Fang Yu Menu" description="Sample menu">
+      <add-to-group group-id="MainMenu" anchor="last"  />
+      <action id="Myplugin.Textboxes" class="TextBoxes" text="Fang Yu _First Plugin" description="Fang Yu first plugin" />
+    </group>
+  </actions>
+
+</idea-plugin>
