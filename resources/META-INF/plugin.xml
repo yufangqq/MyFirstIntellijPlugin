@@ -5,11 +5,11 @@
   <vendor email="yufang@google.com" url="http://www.google.com">Google, Inc.</vendor>
 
   <description><![CDATA[
-       Fang Yu first plugin test 2
+       Fang Yu first plugin
     ]]></description>
 
   <change-notes><![CDATA[
-      First version test 2
+      First version
     ]]>
   </change-notes>
 
@@ -21,16 +21,31 @@
   <!-- uncomment to enable plugin in all products
   <depends>com.intellij.modules.lang</depends>
   -->
+  <depends>com.intellij.modules.java</depends>
+  <depends>org.jetbrains.android</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <!-- Add your extensions here -->
   </extensions>
+  <application-components>
+    <!-- Add your application components here -->
+  </application-components>
+
+  <project-components>
+    <!-- Add your project components here -->
+  </project-components>
 
   <actions>
-    <group id="MyPlugin.SampleMenu" text="_Fang Yu Menu" description="Sample menu">
+    <group id="YuFang.MenuGroup" text="_Fang Yu Menu" description="Fang Yu menu">
       <add-to-group group-id="MainMenu" anchor="last"  />
-      <action id="Myplugin.Textboxes" class="TextBoxes" text="Fang Yu _First Plugin" description="Fang Yu first plugin" />
+      <action id="YuFang.Menu1" class="yufang.TextBoxes" text="Fang Yu First Menu" description="Fang Yu first menu" />
     </group>
+
+    <action class="yufang.EncryptHome" id="YuFang.EncryptFile"
+          text="Fang Yu File Encryptor"
+          icon="/src/resources/ic_launcher.png">
+      <add-to-group group-id="NewGroup" anchor="last"/>
+    </action>
   </actions>
 
 </idea-plugin>
