@@ -37,7 +37,7 @@ public class EncryptDragAndDropListener implements DropTargetListener {
       @SuppressWarnings("unchecked")
       List<File> files = (List<File>) t.getTransferData(DataFlavor.javaFileListFlavor);
       if (files.size() == 1) {
-        EncryptMainUi.getInstance().setImageIcon(files.get(0));
+        EncryptMainUi.getInstance().setSelectedFile(files.get(0));
       }
     } catch (UnsupportedFlavorException | IOException e) {
       // TODO Auto-generated catch block

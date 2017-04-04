@@ -1,23 +1,19 @@
 package yufang;
 
-import com.intellij.util.ui.UIUtil;
-
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.colorchooser.AbstractColorChooserPanel;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import java.awt.*;
 import java.awt.dnd.DropTarget;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
-import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class EncryptMainUi extends JFrame implements ActionListener {
 
@@ -25,9 +21,11 @@ public class EncryptMainUi extends JFrame implements ActionListener {
   //make reference for Main class
   private static EncryptMainUi m;
   public BufferedImage originalImage, copyImage;
-  int image_Xpos, image_Ypos;
   private JTextField resPathJTF;
-  private JLabel imagePreviewJL;
+  private JLabel filePreviewJL;
+
+  byte[] originalFile;
+
 
   public EncryptMainUi() {
     m = this;
@@ -43,7 +41,7 @@ public class EncryptMainUi extends JFrame implements ActionListener {
 
     JMenu fileMenu = new JMenu("File");
     JMenuBar menuBar = new JMenuBar();
-    String[] fileItems = {"Open", "Save"};
+    String[] fileItems = {"Open", "Save", "Encrypt", "Decrypt"};
     for (String fileItem : fileItems) {
       JMenuItem item = new JMenuItem(fileItem);
       item.addActionListener(this);
@@ -53,20 +51,20 @@ public class EncryptMainUi extends JFrame implements ActionListener {
 
     resPathJTF = new JTextField();
 
-    JLabel resPathJL = new JLabel("Browse your image file here");
+    JLabel resPathJL = new JLabel("Browse your file here");
     JButton addBtn = new JButton("Add");
 
-    imagePreviewJL = new JLabel();
+    filePreviewJL = new JLabel();
 
-    imagePreviewJL.setBorder(border);
-    imagePreviewJL.setHorizontalAlignment(JLabel.CENTER);
-    imagePreviewJL.setVerticalAlignment(JLabel.CENTER);
+    filePreviewJL.setBorder(border);
+    filePreviewJL.setHorizontalAlignment(JLabel.CENTER);
+    filePreviewJL.setVerticalAlignment(JLabel.CENTER);
 
     add(resPathJL).setBounds(20, 50, 170, 30);
     add(resPathJTF).setBounds(190, 50, 150, 30);
     add(addBtn).setBounds(350, 50, 100, 30);
 
-    add(imagePreviewJL).setBounds(600, 0, 300, 500);
+    add(filePreviewJL).setBounds(600, 0, 300, 500);
 
     setJMenuBar(menuBar);
     revalidate();
@@ -102,29 +100,27 @@ public class EncryptMainUi extends JFrame implements ActionListener {
       case "Add":
       case "Open":
         JFileChooser jFileChooser = new JFileChooser();
-        jFileChooser.setFileFilter(new FileNameExtensionFilter("Image files only", "png", "jpg"));
+        // jFileChooser.setFileFilter(new FileNameExtensionFilter("Image files only", "png", "jpg"));
         int result = jFileChooser.showOpenDialog(this);
         if (result == JFileChooser.APPROVE_OPTION) {
           File file = jFileChooser.getSelectedFile();
-          setImageIcon(file);
+          setSelectedFile(file);
         }
 
         break;
       case "Save":
         if (resPathJTF.getText() != null && !resPathJTF.getText().equalsIgnoreCase("")) {
 
-          File file = new File(resPathJTF.getText());
+          File currentSelectedFile = new File(resPathJTF.getText());
           jFileChooser = new JFileChooser();
-          jFileChooser.setSelectedFile(file);
+          jFileChooser.setSelectedFile(currentSelectedFile);
           int choose_option = jFileChooser.showSaveDialog(this);
 
           if (choose_option == JFileChooser.APPROVE_OPTION) {
-            File file1 = jFileChooser.getSelectedFile();
+            File newSelectedFile = jFileChooser.getSelectedFile();
             try {
-              if (copyImage != null)
-                ImageIO.write(copyImage, "png", file1);
-              else
-                ImageIO.write(originalImage, "png", file1);
+              Path path = Paths.get(newSelectedFile.getPath());
+              Files.write(path, originalFile); //creates, overwrites
               JOptionPane.showMessageDialog(this, "File saved successfully");
             } catch (IOException e1) {
               // TODO Auto-generated catch block
@@ -135,7 +131,67 @@ public class EncryptMainUi extends JFrame implements ActionListener {
             JOptionPane.showMessageDialog(this, "File not saved", "Warning", JOptionPane.WARNING_MESSAGE);
           }
         } else {
-          JOptionPane.showMessageDialog(this, "You should select image first");
+          JOptionPane.showMessageDialog(this, "You should select file first");
+        }
+//               new SearchAndSave(requiredColor, image, file.getName(), file.getParentFile().getName(), file.getParentFile().getParentFile().getPath());
+        break;
+      case "Encrypt":
+        if (resPathJTF.getText() != null && !resPathJTF.getText().equalsIgnoreCase("")) {
+
+          File currentSelectedFile = new File(resPathJTF.getText());
+          jFileChooser = new JFileChooser();
+          jFileChooser.setSelectedFile(currentSelectedFile);
+          int choose_option = jFileChooser.showSaveDialog(this);
+
+          if (choose_option == JFileChooser.APPROVE_OPTION) {
+            File newSelectedFile = jFileChooser.getSelectedFile();
+            try {
+              Path path = Paths.get(newSelectedFile.getPath());
+              Files.write(path, EncryptAesCryptor.encrypt(originalFile)); //creates, overwrites
+              JOptionPane.showMessageDialog(this, "File encrypted then saved successfully");
+            } catch (IOException e1) {
+              // TODO Auto-generated catch block
+              e1.printStackTrace();
+              JOptionPane.showMessageDialog(this, "File not saved", "Warning", JOptionPane.WARNING_MESSAGE);
+            } catch (Exception e2) {
+              e2.printStackTrace();
+              JOptionPane.showMessageDialog(this, "File not encrypted", "Warning", JOptionPane.WARNING_MESSAGE);
+            }
+          } else {
+            JOptionPane.showMessageDialog(this, "File not saved", "Warning", JOptionPane.WARNING_MESSAGE);
+          }
+        } else {
+          JOptionPane.showMessageDialog(this, "You should select file first");
+        }
+//               new SearchAndSave(requiredColor, image, file.getName(), file.getParentFile().getName(), file.getParentFile().getParentFile().getPath());
+        break;
+      case "Decrypt":
+        if (resPathJTF.getText() != null && !resPathJTF.getText().equalsIgnoreCase("")) {
+
+          File currentSelectedFile = new File(resPathJTF.getText());
+          jFileChooser = new JFileChooser();
+          jFileChooser.setSelectedFile(currentSelectedFile);
+          int choose_option = jFileChooser.showSaveDialog(this);
+
+          if (choose_option == JFileChooser.APPROVE_OPTION) {
+            File newSelectedFile = jFileChooser.getSelectedFile();
+            try {
+              Path path = Paths.get(newSelectedFile.getPath());
+              Files.write(path, EncryptAesCryptor.decrypt(originalFile)); //creates, overwrites
+              JOptionPane.showMessageDialog(this, "File decrypted then saved successfully");
+            } catch (IOException e1) {
+              // TODO Auto-generated catch block
+              e1.printStackTrace();
+              JOptionPane.showMessageDialog(this, "File not saved", "Warning", JOptionPane.WARNING_MESSAGE);
+            } catch (Exception e2) {
+              e2.printStackTrace();
+              JOptionPane.showMessageDialog(this, "File not decrypted", "Warning", JOptionPane.WARNING_MESSAGE);
+            }
+          } else {
+            JOptionPane.showMessageDialog(this, "File not saved", "Warning", JOptionPane.WARNING_MESSAGE);
+          }
+        } else {
+          JOptionPane.showMessageDialog(this, "You should select file first");
         }
 //               new SearchAndSave(requiredColor, image, file.getName(), file.getParentFile().getName(), file.getParentFile().getParentFile().getPath());
         break;
@@ -148,11 +204,11 @@ public class EncryptMainUi extends JFrame implements ActionListener {
 
   private void setDragAndDropListener() {
     EncryptDragAndDropListener listener = new EncryptDragAndDropListener();
-    new DropTarget(imagePreviewJL, listener);
+    new DropTarget(filePreviewJL, listener);
   }
 
   private void setMouseListener() {
-    imagePreviewJL.addMouseListener(new MouseListener() {
+    filePreviewJL.addMouseListener(new MouseListener() {
 
       @Override
       public void mouseReleased(MouseEvent e) {
@@ -211,19 +267,16 @@ public class EncryptMainUi extends JFrame implements ActionListener {
   private void setUp() {
   }
 
-  public void setImageIcon(File file) {
+  public void setSelectedFile(File file) {
     try {
-      if (file.getAbsoluteFile().toString().contains(".png") ||
-          file.getAbsoluteFile().toString().contains(".jpg")) {
+      resPathJTF.setText(file.getAbsolutePath());
 
-        resPathJTF.setText(file.getAbsolutePath());
+      // originalImage = ImageIO.read(new File(resPathJTF.getText()));
 
-        originalImage = ImageIO.read(new File(resPathJTF.getText()));
-        imagePreviewJL.setIcon(new ImageIcon(originalImage));
+      Path path = Paths.get(resPathJTF.getText());
+      originalFile = Files.readAllBytes(path);
+      filePreviewJL.setIcon(new ImageIcon(originalFile));
 
-      } else {
-        JOptionPane.showMessageDialog(this, "Selected file is not an image file");
-      }
     } catch (IOException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
