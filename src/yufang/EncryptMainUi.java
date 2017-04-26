@@ -24,14 +24,22 @@ public class EncryptMainUi extends JFrame implements ActionListener {
   private JTextField resPathJTF;
   private JLabel filePreviewJL;
 
+  private JTextField keyJTF;
+  private JLabel keyJL;
+  private JTextField ivJTF;
+  private JLabel ivJL;
+
   byte[] originalFile;
 
+  private int uiWidth = 1000;
+  private int uiHeight = 400;
 
-  public EncryptMainUi() {
+
+  public EncryptMainUi(String filePath) {
     m = this;
     setLayout(null);
     setVisible(true);
-    setSize(900, 500);
+    setSize(uiWidth, uiHeight);
     setTitle(TITLE);
     setResizable(false);
     //setLocation(GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds().width - this.getWidth(), 100);
@@ -51,8 +59,8 @@ public class EncryptMainUi extends JFrame implements ActionListener {
 
     resPathJTF = new JTextField();
 
-    JLabel resPathJL = new JLabel("Browse your file here");
-    JButton addBtn = new JButton("Add");
+    JLabel resPathJL = new JLabel("Selected file:");
+    JButton addBtn = new JButton("Select");
 
     filePreviewJL = new JLabel();
 
@@ -60,16 +68,48 @@ public class EncryptMainUi extends JFrame implements ActionListener {
     filePreviewJL.setHorizontalAlignment(JLabel.CENTER);
     filePreviewJL.setVerticalAlignment(JLabel.CENTER);
 
-    add(resPathJL).setBounds(20, 50, 170, 30);
-    add(resPathJTF).setBounds(190, 50, 150, 30);
-    add(addBtn).setBounds(350, 50, 100, 30);
+    int pathJLX = 20;
+    int pathJLY = 50;
+    int pathJLWidth = 150;
+    int pathJLHeight = 30;
+    add(resPathJL).setBounds(pathJLX, pathJLY, pathJLWidth, pathJLHeight);
+    int pathJTFWidth = 500;
+    add(resPathJTF).setBounds(pathJLX + pathJLWidth, pathJLY, pathJTFWidth, pathJLHeight);
+    // add(addBtn).setBounds(350, 50, 100, 30);
 
-    add(filePreviewJL).setBounds(600, 0, 300, 500);
+    add(filePreviewJL).setBounds(pathJLX + pathJLWidth + pathJTFWidth + 50, 0, 300, uiHeight);
+
+    keyJTF = new JTextField();
+    keyJL = new JLabel("AES key (ascii hex):");
+    ivJTF = new JTextField();
+    ivJL = new JLabel("AES iv (ascii hex):");
+    keyJTF.setText("ea6fe02d3e440baeff785cbbb463f65d");
+    ivJTF.setText("30303030303030303030303030303031");
+    add(keyJL).setBounds(pathJLX, pathJLY + pathJLHeight * 2, pathJLWidth, pathJLHeight);
+    add(keyJTF).setBounds(pathJLX + pathJLWidth, pathJLY+ pathJLHeight* 2, pathJTFWidth, pathJLHeight);
+    add(ivJL).setBounds(pathJLX, pathJLY + pathJLHeight * 4, pathJLWidth, pathJLHeight);
+    add(ivJTF).setBounds(pathJLX + pathJLWidth, pathJLY+ pathJLHeight * 4, pathJTFWidth, pathJLHeight);
 
     setJMenuBar(menuBar);
     revalidate();
 
     resPathJTF.setEditable(false);
+
+    if (!filePath.isEmpty()) {
+      try {
+        resPathJTF.setText(filePath);
+
+        // originalImage = ImageIO.read(new File(resPathJTF.getText()));
+
+        Path path = Paths.get(filePath);
+        originalFile = Files.readAllBytes(path);
+        filePreviewJL.setIcon(new ImageIcon(originalFile));
+
+      } catch (IOException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
+    }
 
     //register listener
     addBtn.addActionListener(this);
@@ -88,7 +128,7 @@ public class EncryptMainUi extends JFrame implements ActionListener {
 
   // main() method
   public static void main(String args[]) {
-    m = new EncryptMainUi();
+    m = new EncryptMainUi("");
   }
 
 //		################   Listeners ##############################
@@ -101,6 +141,9 @@ public class EncryptMainUi extends JFrame implements ActionListener {
       case "Open":
         JFileChooser jFileChooser = new JFileChooser();
         // jFileChooser.setFileFilter(new FileNameExtensionFilter("Image files only", "png", "jpg"));
+        if (!resPathJTF.getText().isEmpty()) {
+          jFileChooser.setSelectedFile(new File(resPathJTF.getText()));
+        }
         int result = jFileChooser.showOpenDialog(this);
         if (result == JFileChooser.APPROVE_OPTION) {
           File file = jFileChooser.getSelectedFile();
@@ -147,8 +190,12 @@ public class EncryptMainUi extends JFrame implements ActionListener {
             File newSelectedFile = jFileChooser.getSelectedFile();
             try {
               Path path = Paths.get(newSelectedFile.getPath());
-              Files.write(path, EncryptAesCryptor.encrypt(originalFile)); //creates, overwrites
-              JOptionPane.showMessageDialog(this, "File encrypted then saved successfully");
+              if (keyJTF.getText().isEmpty() || ivJTF.getText().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "File not encrypted, key or iv is missing", "Warning", JOptionPane.WARNING_MESSAGE);
+              } else {
+                Files.write(path, EncryptAesCryptor.encrypt(originalFile, keyJTF.getText(), ivJTF.getText())); //creates, overwrites
+                JOptionPane.showMessageDialog(this, "File encrypted then saved successfully");
+              }
             } catch (IOException e1) {
               // TODO Auto-generated catch block
               e1.printStackTrace();
@@ -176,9 +223,13 @@ public class EncryptMainUi extends JFrame implements ActionListener {
           if (choose_option == JFileChooser.APPROVE_OPTION) {
             File newSelectedFile = jFileChooser.getSelectedFile();
             try {
-              Path path = Paths.get(newSelectedFile.getPath());
-              Files.write(path, EncryptAesCryptor.decrypt(originalFile)); //creates, overwrites
-              JOptionPane.showMessageDialog(this, "File decrypted then saved successfully");
+              if (keyJTF.getText().isEmpty() || ivJTF.getText().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "File not decrypted, key or iv is missing", "Warning", JOptionPane.WARNING_MESSAGE);
+              } else {
+                Path path = Paths.get(newSelectedFile.getPath());
+                Files.write(path, EncryptAesCryptor.decrypt(originalFile, keyJTF.getText(), ivJTF.getText())); //creates, overwrites
+                JOptionPane.showMessageDialog(this, "File decrypted then saved successfully");
+              }
             } catch (IOException e1) {
               // TODO Auto-generated catch block
               e1.printStackTrace();
@@ -224,7 +275,7 @@ public class EncryptMainUi extends JFrame implements ActionListener {
 
       @Override
       public void mouseExited(MouseEvent e) {
-        // TODO Auto-generated method stub
+        // TODO Auto-generated method filePathstub
 
       }
 
